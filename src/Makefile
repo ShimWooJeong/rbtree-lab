@@ -6,3 +6,4 @@ driver: driver.o rbtree.o
 
 clean:
 	rm -f driver *.o
+	rm -f rbtree *.o
