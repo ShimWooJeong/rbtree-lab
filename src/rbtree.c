@@ -9,9 +9,9 @@ rbtree *new_rbtree(void) {
   node_t *nil_node = (node_t *)calloc(1, sizeof(node_t));
   nil_node->color = RBTREE_BLACK;
   nil_node->key = 0;
-  nil_node->parent = NULL;
-  nil_node->left = NULL;
-  nil_node->right = NULL;
+  nil_node->parent = nil_node;
+  nil_node->left = nil_node;
+  nil_node->right = nil_node;
 
   //해당 함수는 rbtree의 기반을 다지는 함수 느낌?
   //노드도 없고 걍 nil만 있는 상태
@@ -37,8 +37,8 @@ void delete_rbtree(rbtree *t) {
   // 해당 tree가 사용했던 메모리를 전부 반환해야 합니다. (valgrind로 나타나지 않아야 함)
   //node_t *current = t->root;
 
-  free_recursion(t, t->root);
-  free(t->nil);
+  free_recursion(t, t->root); //노드들은 recursion하면서 모두 free하고
+  free(t->nil); //nil만 남으니까 free(nil)
   t->nil = NULL; //댕글링 안 되게
   free(t);
   t = NULL; //댕글링 안 되게
@@ -83,7 +83,7 @@ void right_rotation(rbtree *t, node_t *x){
     t->root = y; //y가 root가 됨
   }else if(x == x->parent->left){ //x가 부모의 왼쪽 서브트리였다면
     x->parent->left = y; //y로 연결
-  }else{ //x가 부모의 오른족 서브트리였다면
+  }else{ //x가 부모의 오른쪽 서브트리였다면
     x->parent->right = y; //y로 연결
   }
   y->right = x; //왼쪽 노드의 오른쪽을 x로 연결
@@ -91,9 +91,10 @@ void right_rotation(rbtree *t, node_t *x){
 }
 
 void RB_INSERT_FIXUP(rbtree *t, node_t *z){
+  node_t *y;
   while(z->parent->color == RBTREE_RED){ //삽입 노드의 부모가 red일 동안 (red가 연속되는 동안)
     if(z->parent == z->parent->parent->left){ //x의 부모가 할아버지의 왼쪽 서브트리였을 경우
-      node_t *y = z->parent->parent->right; //y = 부모의 형제 = 삼촌
+      y = z->parent->parent->right; //y = 부모의 형제 = 삼촌
       if(y->color == RBTREE_RED){ //삼촌이 RED일 경우 = Case1
         z->parent->color = RBTREE_BLACK; 
         y->color = RBTREE_BLACK;        
@@ -111,7 +112,7 @@ void RB_INSERT_FIXUP(rbtree *t, node_t *z){
         right_rotation(t, z->parent->parent);
       }
     }else{ //z의 부모가 할아버지의 오른쪽 서브트리였을 경우 (위 코드에서 left <-> right)
-      node_t *y = z->parent->parent->left;
+      y = z->parent->parent->left;
       if(y->color == RBTREE_RED){
         z->parent->color = RBTREE_BLACK;
         y->color = RBTREE_BLACK;
@@ -152,6 +153,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key) {
     }
   }
   insert_node->parent = insert_parent; //삽입할 위치에서 부모 연결
+  
   //자식이 부모를 가졌으면, 부모의 자식도 설정해줘야 함
   if(insert_parent == t->nil){ //삽입할 위치의 부모가 nil이었다, 그럼 root가 되어야 함
     t->root = insert_node;
@@ -161,9 +163,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key) {
   }else{ //삽입된 위치가 오른쪽이라면
     insert_parent->right = insert_node; //부모의 오른쪽 자식이 됨
   }
-  insert_node->left = t->nil;
-  insert_node->right = t->nil;
-  insert_node->color = RBTREE_RED;
+
   RB_INSERT_FIXUP(t, insert_node); //RB-Tree 속성 확인&재구조 함수
 
   return t->root;
@@ -282,7 +282,7 @@ void rb_transplant(rbtree *t, node_t *u, node_t *v){
 
 void RB_DELETE_FIXUP(rbtree *t, node_t *x){
   node_t *y;
-  //형제가 null일 경우 예외처리를 해줘야 ㅎㅏ나...;;
+  //x = doubly black
 
   while(x != t->root && x->color == RBTREE_BLACK){
     if(x == x->parent->left){ //삭제되는 노드가 왼쪽 서브트리였을 경우
@@ -314,7 +314,7 @@ void RB_DELETE_FIXUP(rbtree *t, node_t *x){
         y->right->color = RBTREE_BLACK;
         x->parent->color = RBTREE_BLACK;
         left_rotation(t, x->parent);
-        x = t->root; //??
+        x = t->root; //root로 할당해줌으로써 while문 빠져나감
       }
     }else{ //삭제되는 노드가 오른쪽 서브트리였을 경우
       y = x->parent->left;
@@ -339,7 +339,7 @@ void RB_DELETE_FIXUP(rbtree *t, node_t *x){
         y->left->color = RBTREE_BLACK;
         x->parent->color = RBTREE_BLACK;
         right_rotation(t, x->parent);
-        x = t->root; //??
+        x = t->root;//root로 할당해줌으로써 while문 빠져나감
       }
     }
   }
@@ -357,11 +357,11 @@ int rbtree_erase(rbtree *t, node_t *p) {
   if(p->left == t->nil){            //삭제하는 노드의 왼쪽 자식이 없다면(자식이 한 개라면)
     x = p->right;                   //삭제하는 노드의 오른쪽 자식 저장
     rb_transplant(t, p, p->right);  //오른쪽 자식을 삭제하는 노드의 자리로 교체
-    if(x == t->nil){ //만약 삭제되는 노드의 자식이 둘 다 없다면 여기로 들어옴
-      t->nil->parent = NULL; //그럼 자식이 nil인데 transplant 하니까 nil의 parent가 설정되어버림, 그러니까 nil로 설정해주기
-    }
+    // if(x == t->nil){ //만약 삭제되는 노드의 자식이 둘 다 없다면 여기로 들어옴
+    //   t->nil->parent = NULL; //그럼 자식이 nil인데 transplant 하니까 nil의 parent가 설정되어버림, 그러니까 nil로 설정해주기
+    // }
   }else if(p->right == t->nil){     //삭제하는 노드의 오른쪽 자식이 없다면(자식이 한 개라면)
-    x = p->left;                    //삭제되는 노드의 왼쪽 자식 저장ß
+    x = p->left;                    //삭제되는 노드의 왼쪽 자식 저장
     rb_transplant(t, p, p->left);   //왼쪽 자식을 삭제하는 노드의 자리로 교체
   }else{ //삭제하는 노드의 자식이 두 개라면
     y = rb_minimum(t, p->right); //삭제되는 노드는 successor가 됨
@@ -383,8 +383,6 @@ int rbtree_erase(rbtree *t, node_t *p) {
   }
   // 삭제되는 색이 BLACK이었다면, black_height 속성이 깨지니까 균형을 맞춰줘야 함 (재구조)
   if(delete_color == RBTREE_BLACK){
-    if(x != t->nil) // 삭제하는 노드를 대체하는 애가 nil이 아닐 때에만 재구조
-                    // 대체되는 노드가 nil일 경우엔 재구조가 필요하지 않음 
       RB_DELETE_FIXUP(t, x);
   }
   free(p);
@@ -398,7 +396,7 @@ void inorder_tree(node_t *root, node_t *nil, key_t *arr, int *index, const size_
   inorder_tree(root->left, nil, arr, index, n);
   if(*index < n){
     arr[*index] = root->key;
-    printf("%d ", arr[*index]);
+    //printf("%d ", arr[*index]);
     (*index)++;
   }
   inorder_tree(root->right, nil, arr, index, n);
@@ -413,8 +411,61 @@ int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n) {
 
   int index = 0;
   inorder_tree(t->root, t->nil, arr, &index, n);
-  printf("\n");
+  //printf("\n");
 
   return 0;
 }
+// 트리를 출력하는 함수
+// void print_rbtree(rbtree *t, node_t *node, int space)
+// {
+//   if (node == t->nil)
+//     return;
+
+//   space += 10;
+//   print_rbtree(t, node->right, space);
+
+//   printf("\n");
+//   for (int i = 10; i < space; i++)
+//     printf(" ");
+//   printf("%d(%s)\n", node->key, node->color == RBTREE_RED ? "R" : "B");
+
+//   print_rbtree(t, node->left, space);
+// }
+
+// int main()
+// {
+//   rbtree *t = new_rbtree(); // 레드-블랙 트리 생성 함수
+//   int key;
+
+//   printf("노드를 삽입하려면 키 값을 입력하세요 (음수를 입력하면 종료):\n");
+//   while (scanf("%d", &key) && key >= 0)
+//   {
+//     rbtree_insert(t, key);
+//     print_rbtree(t, t->root, 0);
+//     printf("-----------\n\n");
+//   }
+
+//   // 트리 메모리 해제
+//   delete_rbtree(t);
+
+//   return 0;
+// }
+
+// int main(){
+//   rbtree *t = new_rbtree();
+//   rbtree_insert(t , 50);
+//   printf("%d", t->root->key);
+//   rbtree_insert(t , 10);
+//   printf("%d", t->root->key);
+//   rbtree_insert(t , 10);
+//   printf("%d", t->root->key);
+//   rbtree_insert(t , 30);
+//   printf("%d", t->root->key);
+//   rbtree_insert(t , 40);
+//   printf("%d", t->root->key);
+//   rbtree_insert(t , 60);
+//   printf("%d", t->root->key);
+//   rbtree_insert(t , 70);
+//   printf("%d\n", t->root->key);
+// }
 
