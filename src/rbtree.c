@@ -175,44 +175,44 @@ node_t *rbtree_find(const rbtree *t, const key_t key) {
   // 해당하는 node가 없으면 NULL 반환
   // segmentation 오류가 남 -> 확인해보니까 while문 돌릴 때 cur->key가 key가 아닐동안 도는데
   // 만약 key가 아예 없었다면, while문 계속 돌겠지... 종료조건 cur이 nil이 되면 종료되도록 추가해줌
-  // 그럴거면 그냥 cur != t->nil일 동안 while문 도는 게 나은가
-  // node_t *current = t->root;
-
-  // while(current->key != key){
-  //   if(current == t->nil){
-  //     break;
-  //   }
-
-  //   if(key < current->key){
-  //     current = current->left;
-  //   }else{
-  //     current = current->right;
-  //   }
-  // }
-
-  // if(current == t->nil){
-  //   return NULL;
-  // }else{
-  //   return current;
-  // }
-
-  if(t->root == t->nil){
-    return NULL;
-  }
-
+  // 그럴거면 그냥 cur != t->nil일 동안 while문 도는 게 나은가 = 24.04.23 아래 코드가 이 line에서 말하는 코드임
   node_t *current = t->root;
 
-  while(current != t->nil){
+  while(current->key != key){
+    if(current == t->nil){
+      break;
+    }
+
     if(key < current->key){
       current = current->left;
-    }else if(key > current->key){
-      current = current->right;
     }else{
-      return current;
+      current = current->right;
     }
   }
 
-  return NULL;
+  if(current == t->nil){
+    return NULL;
+  }else{
+    return current;
+  }
+
+  // if(t->root == t->nil){
+  //   return NULL;
+  // }
+
+  // node_t *current = t->root;
+
+  // while(current != t->nil){
+  //   if(key < current->key){
+  //     current = current->left;
+  //   }else if(key > current->key){
+  //     current = current->right;
+  //   }else{
+  //     return current;
+  //   }
+  // }
+
+  // return NULL;
 }
 
 node_t *rbtree_min(const rbtree *t) {
@@ -344,6 +344,7 @@ void RB_DELETE_FIXUP(rbtree *t, node_t *x){
     }
   }
   x->color = RBTREE_BLACK;
+  //x가 RED였다면 (red-and-black)노드였다면 while문 안 들어가고 그냥 흡수하면서 BLACK이 됨
 }
 
 int rbtree_erase(rbtree *t, node_t *p) {
@@ -406,8 +407,8 @@ int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n) {
   // TODO: implement to_array
   // RB tree의 내용을 *key 순서대로* 주어진 array로 변환 //오름차순-중위순회//
   // array의 크기는 n으로 주어지며 tree의 크기가 n 보다 큰 경우에는 순서대로 n개 까지만 변환
-  // array의 메모리 공간은 이 함수를 부르는 쪽에서 준비하고 그 크기를 n으로 알려줍니다.
-  //size_t: 객체나 값이 포함할 수 있는 최대 크기의 데이터를 표현하는 타입으로, 부호없는 정수형이지만 실제 데이터형은 아님
+  // array의 메모리 공간은 이 함수를 부르는 쪽에서 준비하고 그 크기를 n으로 알려준다
+  // size_t: 객체나 값이 포함할 수 있는 최대 크기의 데이터를 표현하는 타입으로, 부호없는 정수형이지만 실제 데이터형은 아님
 
   int index = 0;
   inorder_tree(t->root, t->nil, arr, &index, n);
@@ -415,57 +416,3 @@ int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n) {
 
   return 0;
 }
-// 트리를 출력하는 함수
-// void print_rbtree(rbtree *t, node_t *node, int space)
-// {
-//   if (node == t->nil)
-//     return;
-
-//   space += 10;
-//   print_rbtree(t, node->right, space);
-
-//   printf("\n");
-//   for (int i = 10; i < space; i++)
-//     printf(" ");
-//   printf("%d(%s)\n", node->key, node->color == RBTREE_RED ? "R" : "B");
-
-//   print_rbtree(t, node->left, space);
-// }
-
-// int main()
-// {
-//   rbtree *t = new_rbtree(); // 레드-블랙 트리 생성 함수
-//   int key;
-
-//   printf("노드를 삽입하려면 키 값을 입력하세요 (음수를 입력하면 종료):\n");
-//   while (scanf("%d", &key) && key >= 0)
-//   {
-//     rbtree_insert(t, key);
-//     print_rbtree(t, t->root, 0);
-//     printf("-----------\n\n");
-//   }
-
-//   // 트리 메모리 해제
-//   delete_rbtree(t);
-
-//   return 0;
-// }
-
-// int main(){
-//   rbtree *t = new_rbtree();
-//   rbtree_insert(t , 50);
-//   printf("%d", t->root->key);
-//   rbtree_insert(t , 10);
-//   printf("%d", t->root->key);
-//   rbtree_insert(t , 10);
-//   printf("%d", t->root->key);
-//   rbtree_insert(t , 30);
-//   printf("%d", t->root->key);
-//   rbtree_insert(t , 40);
-//   printf("%d", t->root->key);
-//   rbtree_insert(t , 60);
-//   printf("%d", t->root->key);
-//   rbtree_insert(t , 70);
-//   printf("%d\n", t->root->key);
-// }
-
