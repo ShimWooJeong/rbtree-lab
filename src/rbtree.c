@@ -1,5 +1,5 @@
 #include "rbtree.h"
-#include <stdio.h>
+// #include <stdio.h>
 #include <stdlib.h>
 
 rbtree *new_rbtree(void) {
@@ -91,13 +91,13 @@ void right_rotation(rbtree *t, node_t *x){
 }
 
 void RB_INSERT_FIXUP(rbtree *t, node_t *z){
-  node_t *y;
+  node_t *uncle;
   while(z->parent->color == RBTREE_RED){ //삽입 노드의 부모가 red일 동안 (red가 연속되는 동안)
     if(z->parent == z->parent->parent->left){ //x의 부모가 할아버지의 왼쪽 서브트리였을 경우
-      y = z->parent->parent->right; //y = 부모의 형제 = 삼촌
-      if(y->color == RBTREE_RED){ //삼촌이 RED일 경우 = Case1
+      uncle = z->parent->parent->right; //uncle = 부모의 형제 = 삼촌
+      if(uncle->color == RBTREE_RED){ //삼촌이 RED일 경우 = Case1
         z->parent->color = RBTREE_BLACK; 
-        y->color = RBTREE_BLACK;        
+        uncle->color = RBTREE_BLACK;        
         z->parent->parent->color = RBTREE_RED; //Case1: 부모&삼촌 = BLACK, 할아버지 = RED로 바꾸고
         z = z->parent->parent;          //할아버지에서 다시 확인
       }else{ //삼촌이 BLACK일 경우 = Case2 or Case3
@@ -112,10 +112,10 @@ void RB_INSERT_FIXUP(rbtree *t, node_t *z){
         right_rotation(t, z->parent->parent);
       }
     }else{ //z의 부모가 할아버지의 오른쪽 서브트리였을 경우 (위 코드에서 left <-> right)
-      y = z->parent->parent->left;
-      if(y->color == RBTREE_RED){
+      uncle = z->parent->parent->left;
+      if(uncle->color == RBTREE_RED){
         z->parent->color = RBTREE_BLACK;
-        y->color = RBTREE_BLACK;
+        uncle->color = RBTREE_BLACK;
         z->parent->parent->color = RBTREE_RED;
         z = z->parent->parent;
       }else{
@@ -416,3 +416,48 @@ int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n) {
 
   return 0;
 }
+
+// // 트리를 출력하는 함수
+// void print_rbtree(rbtree *t, node_t *node, int space) {
+//   if (node == t -> nil)
+//     return;
+
+//   space += 10;
+//   print_rbtree(t, node -> right, space);
+
+//   printf("\n");
+//   for (int i = 10; i < space; i++)
+//     printf(" ");
+//   printf("[%d(%s)]\n", node -> key, node -> color == RBTREE_RED ? "R" : "B");
+
+//   print_rbtree(t, node -> left, space);
+// }
+
+// int main() {
+//   rbtree *t = new_rbtree();
+//   int key;
+
+//   printf("노드를 삽입하려면 키 값을 입력하세요 (음수를 입력하면 종료):\n");
+//   while (scanf("%d", &key) && key >= 0) {
+//     rbtree_insert(t, key);
+//     print_rbtree(t, t -> root, 0);
+//   }
+
+//   printf("삭제할 값을 입력하세요:\n");
+//   while (scanf("%d", &key) && key >= 0) {
+//     node_t *to_delete = rbtree_find(t, key);
+//     if (to_delete) {
+//       rbtree_erase(t, to_delete);
+//       printf("%d가 트리에서 삭제되었습니다.\n", key);
+//       print_rbtree(t, t -> root, 0);
+//     } else {
+//       printf("%d가 트리에 존재하지 않습니다.\n", key);
+//     }
+//     printf("삭제할 값을 입력하세요 (음수를 입력하면 종료):\n");
+//   }
+
+//   // 트리 메모리 해제
+//   delete_rbtree(t);
+
+//   return 0;
+// } 
